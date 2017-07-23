@@ -1,0 +1,45 @@
+\documentclass{article}
+\usepackage{fullpage}
+\input{preamble-articles}
+
+\newcommand{\colim}{{\mathsf{colim}}}
+\title{Floris' notes on colimits}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\emph{note: some $f$'s must be $a$'s}
+
+Given a sequence $(A,a)$ with $A:\N \to \type$ and $a: \prd{x : \N}A_n\to A_{n+1}$ we can form its
+colimit $A_\infty\defeq\colim(A_n,a_n)_n$ with point constructor $\iota$ and path constructor
+$\kappa$. We write $a_n^k$ for the iteration $A_n\to A_{n+k}$. Given a dependent sequence $(P,f)$
+with $P: \prd{x:\N}A_n\to\type$ and $f:\prd{x:\N}{x:A_n}P_n(x)\to P_{n+1}(a_nx)$ we can form
+$T\defeq\colim(\sm{x:A_n}P_n(x),(a_n,f_n))_n$. We can also form $S\defeq\sm{x:A_\infty}P_\infty(x)$,
+where $P_\infty:A_\infty\to\type$ is defined by
+$P_\infty(\iota_n(x))\defeq\colim(P_{n+k}(a_n^k(x)),f_{n+k})_k$ and transporting in the
+family$P_\infty$ along $\kappa_n(x)$ is given by the
+equivalence
+$$V:\colim(P_{(n+1)+k}(a_{n+1}^k(x)),f_{(n+1)+k})_k\simeq\colim(P_{n+(k+1)}(a_n^{k+1}(x)),f_{n+(k+1)})_k\simeq\colim(P_{n+k}(a_n^k(x)),f_{n+k})_k$$
+which is a shift followed by transporting along the equality $n+(k+1)=(n+1)+k$.
+
+We want to show that $T\simeq S$,
+i.e. $\colim(\sm{x:A_n}P_n(x),(a_n,f_n))_n\simeq\sm{x:A_\infty}P_\infty(x)$, which in words means
+that the colimit of total spaces is the total space of the colimits.
+
+$T$ is a ``1-HIT'' and $S$ is a ``2-HIT'', we want to first prove the induction principle of $T$ for
+$S$ (without the computation rule), so that we can apply this simpler induction principle when defining the equivalence.
+
+The path constructor $\kappa':\prd{n:\N}{x:A_n}{y:P_n(x)}(\iota_n(x),\iota_0(y))
+=_S(\iota_n(a_nx),\iota_0(f_n(x,y)))$ is given by
+$\kappa'_n(x,y)\defeq(\kappa_n(x),\kappa^*_n(x,y))$, where $\kappa^*_n(x,y)$ is the canonical path
+$$\transfib{P_\infty(x)}{\kappa_n(x)}{\iota(0,f_n(y))}=V(\iota(0,f_n(y)))\equiv\iota(1,f_n(y))=\iota(0,y).$$
+For the induction principle, given $E : S \to \type$ with $e:\prd{n:\N}{x:A_n}{y:P_n(x)}E(\iota_n(x),\iota_0(y))$ and
+$$w:\prd{n:\N}{x:A_n}{y:P_n(x)}e_n(x,y)=_{\kappa'_n(x,y)}^Ee_{n+1}(a_nx,f_n(x,y)).$$
+We want to construct a section $\prd{z:S}E(z)$.
+We first define $g:\prd{n:\N}{x:A_n}{z:P_\infty(\iota(n,x))}E(\iota_n(x),z)$, and for that we first
+define $g_*:\prd{n:\N}{x:A_n}{k:\N}{y:P_{n+k}(a_n^kE(\iota_n(x),z)$
+
+
+\end{document}
