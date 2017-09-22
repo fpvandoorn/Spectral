@@ -196,6 +196,10 @@ graded_hom.mk erfl (λi, lmid)
 variable {M}
 abbreviation gmid [constructor] := graded_hom_id M
 
+definition graded_hom_reindex [constructor] {J : Set} (e : J ≃ I) (f : M₁ →gm M₂) :
+  (λy, M₁ (e y)) →gm (λy, M₂ (e y)) :=
+graded_hom.mk' (e ⬝e deg f ⬝e e⁻¹ᵉ) (λy₁ y₂ p, f ↘ (eq_of_inv_eq p))
+
 definition gm_constant [constructor] (M₁ M₂ : graded_module R I) (d : I ≃ I) : M₁ →gm M₂ :=
 graded_hom.mk' d (gmd_constant d M₁ M₂)
 

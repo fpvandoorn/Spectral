@@ -173,7 +173,12 @@ end eq open eq
 namespace nat
 
   protected definition rec_down (P : ℕ → Type) (s : ℕ) (H0 : P s) (Hs : Πn, P (n+1) → P n) : P 0 :=
-  have Hp : Πn, P n → P (pred n),
+  begin
+    induction s with s IH,
+    { exact H0 },
+    { exact IH (Hs s H0) }
+  end
+/-  have Hp : Πn, P n → P (pred n),
   begin
     intro n p, cases n with n,
     { exact p },
@@ -185,7 +190,16 @@ namespace nat
     { exact H0 },
     { exact Hp (s - n) p }
   end,
-  transport P (nat.sub_self s) (H s)
+  transport P (nat.sub_self s) (H s)-/
+
+  /- this generalizes iterate_commute -/
+  definition iterate_hsquare {A B : Type} {f : A → A} {g : B → B}
+    (h : A → B) (p : hsquare f g h h) (n : ℕ) : hsquare (f^[n]) (g^[n]) h h :=
+  begin
+    induction n with n q,
+      exact homotopy.rfl,
+      exact q ⬝htyh p
+  end
 
 end nat
 

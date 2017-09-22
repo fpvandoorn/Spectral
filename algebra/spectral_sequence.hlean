@@ -7,7 +7,7 @@
 
 import .graded ..spectrum.basic .product_group
 
-open algebra is_trunc left_module is_equiv equiv eq function nat sigma sigma.ops set_quotient
+open algebra is_trunc left_module is_equiv equiv eq function nat sigma set_quotient
 
 /- exact couples -/
 
@@ -21,6 +21,14 @@ namespace left_module
     (ki : is_exact_gmod k i)
 
   open exact_couple
+
+  definition exact_couple_reindex {R : Ring} {I J : Set} (e : J ≃ I) (X : exact_couple R I) :
+    exact_couple R J :=
+  ⦃exact_couple,
+    D := λy, D X (e y), E := λy, E X (e y),
+    i := graded_hom_reindex e (i X), j := graded_hom_reindex e (j X),
+    k := graded_hom_reindex e (k X),
+    ij := sorry, jk := sorry, ki := sorry⦄
 
   namespace derived_couple
   section
@@ -114,9 +122,10 @@ namespace left_module
   end
 
   definition k' : E' →gm D' :=
-  @graded_quotient_elim _ _ _ _ _ _ (graded_submodule_functor k k_lemma1)
+  @graded_quotient_elim _ _ _ _ _ _ k₂
                        (by intro x m h; cases m with [m1, m2]; exact k_lemma2 m1 m2 h)
 
+  open sigma.ops
   definition i'_eq ⦃x : I⦄ (m : D x) (h : image (i ← x) m) : (i' x ⟨m, h⟩).1 = i x m :=
   by reflexivity
 
@@ -242,10 +251,26 @@ namespace left_module
     { assumption }
   end
 
+  open is_bounded
+  definition is_bounded_reindex {R : Ring} {I J : Set} (e : J ≃ I) {X : exact_couple R I}
+    (HH : is_bounded X) : is_bounded (exact_couple_reindex e X) :=
+  begin
+    apply is_bounded.mk' (B HH ∘ e) (B' HH ∘ e),
+    { intros x y s p h, refine Dub HH _ h,
+      refine (iterate_hsquare e _ s x)⁻¹ ⬝ ap e p, intro x, exact to_right_inv e _ },
+    { intros x y z s p q h, refine Dlb HH _ _ h,
+      refine (iterate_hsquare e _ s y)⁻¹ ⬝ ap e q, intro x, exact to_right_inv e _ },
+    { intro x y s p h, refine Elb HH _ h,
+      refine (iterate_hsquare e _ s x)⁻¹ ⬝ ap e p, intro x, exact to_right_inv e _ },
+    { intro y, exact ap e⁻¹ᵉ (ap (deg (i X)) (to_right_inv e _) ⬝
+        deg_ik_commute HH (e y) ⬝ ap (deg (k X)) (to_right_inv e _)⁻¹) },
+    { intro y, exact ap e⁻¹ᵉ (ap (deg (i X)) (to_right_inv e _) ⬝
+        deg_ij_commute HH (e y) ⬝ ap (deg (j X)) (to_right_inv e _)⁻¹) }
+  end
+
   namespace convergence_theorem
   section
 
-  open is_bounded
   parameters {R : Ring} {I : Set} (X : exact_couple R I) (HH : is_bounded X)
 
   local abbreviation B := B HH
@@ -456,11 +481,6 @@ namespace left_module
   end
   end convergence_theorem
 
-  -- open convergence_theorem
-  -- print axioms short_exact_mod_infpage
-  -- print axioms Dinfdiag0
-  -- print axioms Dinfdiag_stable
-
   open int group prod convergence_theorem prod.ops
 
   definition Z2 [constructor] : Set := gℤ ×g gℤ
@@ -470,7 +490,7 @@ namespace left_module
     (X : exact_couple.{u 0 v w} R Z2)
     (HH : is_bounded X)
     (s₀ : gℤ → gℤ)
-    (p : Π(n : gℤ), is_bounded.B' HH (deg (k X) (n, s₀ n)) = 0)
+    (HB : Π(n : gℤ), is_bounded.B' HH (deg (k X) (n, s₀ n)) = 0)
     (e : Π(x : gℤ ×g gℤ), exact_couple.E X x ≃lm E' x.1 x.2)
     (f : Π(n : gℤ), exact_couple.D X (deg (k X) (n, s₀ n)) ≃lm Dinf n)
 
@@ -493,9 +513,17 @@ namespace left_module
 
   definition converges_to_isomorphism {E'' : gℤ → gℤ → LeftModule R} {Dinf' : graded_module R gℤ}
     (e' : Πn s, E' n s ≃lm E'' n s) (f' : Πn, Dinf n ≃lm Dinf' n) : E'' ⟹ Dinf' :=
-  converges_to.mk X HH s₀ (p c)
+  converges_to.mk X HH s₀ (HB c)
     begin intro x, induction x with n s, exact e c (n, s) ⬝lm e' n s end
     (λn, f c n ⬝lm f' n)
+
+  definition converges_to_reindex {E'' : gℤ → gℤ → LeftModule R} {Dinf' : graded_module R gℤ}
+    (i : gℤ ×g gℤ ≃ gℤ × gℤ) (e' : Πp q, E' p q ≃lm E'' (i (p, q)).1 (i (p, q)).2)
+    (i2 : gℤ ≃ gℤ) (f' : Πn, Dinf n ≃lm Dinf' (i2 n)) :
+    (λp q, E'' p q) ⟹ λn, Dinf' n :=
+  converges_to.mk (exact_couple_reindex i X) (is_bounded_reindex i HH) s₀ sorry /-(HB c)-/
+    sorry --begin intro x, induction x with p q, exact e c (p, q) ⬝lm e' p q end
+    sorry
 
   theorem is_contr_converges_to_precise (n : gℤ)
   (H : Π(n : gℤ) (l : ℕ), is_contr (E' ((deg i)^[l] (n, s₀ n)).1 ((deg i)^[l] (n, s₀ n)).2)) :
@@ -512,7 +540,7 @@ namespace left_module
         exact is_contr_middle_of_short_exact_mod (short_exact_mod_infpage X HH (n, s₀ n) l)
                 (H2 l) H }},
     refine @is_trunc_equiv_closed _ _ _ _ H3,
-    exact equiv_of_isomorphism (Dinfdiag0 X HH (n, s₀ n) (p c n) ⬝lm f c n)
+    exact equiv_of_isomorphism (Dinfdiag0 X HH (n, s₀ n) (HB c n) ⬝lm f c n)
   end
 
   theorem is_contr_converges_to (n : gℤ) (H : Π(n s : gℤ), is_contr (E' n s)) : is_contr (Dinf n) :=
