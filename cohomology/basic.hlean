@@ -63,6 +63,7 @@ notation `upH^` n `[`:0 binders `, ` r:(scoped Y, unreduced_parametrized_cohomol
 notation `uopH^` n `[`:0 binders `, ` r:(scoped G, unreduced_ordinary_parametrized_cohomology G n) `]`:0 := r
 
 /- an alternate definition of cohomology -/
+
 definition parametrized_cohomology_isomorphism_shomotopy_group_spi {X : Type*} (Y : X → spectrum)
   {n m : ℤ} (p : -m = n) : pH^n[(x : X), Y x] ≃g πₛ[m] (spi X Y) :=
 begin
@@ -145,6 +146,14 @@ cohomology_isomorphism (add_point_pequiv f) Y n
 definition unreduced_cohomology_isomorphism_right (X : Type) {Y Y' : spectrum} (e : Πn, Y n ≃* Y' n)
   (n : ℤ) : uH^n[X, Y] ≃g uH^n[X, Y'] :=
 cohomology_isomorphism_right X₊ e n
+
+definition unreduced_ordinary_cohomology_isomorphism {X X' : Type} (f : X' ≃ X) (G : AbGroup)
+  (n : ℤ) : uoH^n[X, G] ≃g uoH^n[X', G] :=
+unreduced_cohomology_isomorphism f (EM_spectrum G) n
+
+definition unreduced_ordinary_cohomology_isomorphism_right (X : Type) {G G' : AbGroup}
+  (e : G ≃g G') (n : ℤ) : uoH^n[X, G] ≃g uoH^n[X, G'] :=
+unreduced_cohomology_isomorphism_right X (EM_spectrum_pequiv e) n
 
 definition parametrized_cohomology_isomorphism_right {X : Type*} {Y Y' : X → spectrum}
   (e : Πx n, Y x n ≃* Y' x n) (n : ℤ) : pH^n[(x : X), Y x] ≃g pH^n[(x : X), Y' x] :=
