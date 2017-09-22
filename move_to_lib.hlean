@@ -853,6 +853,7 @@ end sum
 namespace prod
 
   infix ` ×→ `:63 := prod_functor
+  infix ` ×≃ `:63 := prod_equiv_prod
 
 end prod
 
