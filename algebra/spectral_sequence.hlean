@@ -22,13 +22,12 @@ namespace left_module
 
   open exact_couple
 
-  definition exact_couple_reindex {R : Ring} {I J : Set} (e : J ≃ I) (X : exact_couple R I) :
-    exact_couple R J :=
-  ⦃exact_couple,
-    D := λy, D X (e y), E := λy, E X (e y),
+  definition exact_couple_reindex [constructor] {R : Ring} {I J : Set} (e : J ≃ I)
+    (X : exact_couple R I) : exact_couple R J :=
+  ⦃exact_couple, D := λy, D X (e y), E := λy, E X (e y),
     i := graded_hom_reindex e (i X), j := graded_hom_reindex e (j X),
-    k := graded_hom_reindex e (k X),
-    ij := sorry, jk := sorry, ki := sorry⦄
+    k := graded_hom_reindex e (k X), ij := is_exact_gmod_reindex e (ij X),
+    jk := is_exact_gmod_reindex e (jk X), ki := is_exact_gmod_reindex e (ki X)⦄
 
   namespace derived_couple
   section
@@ -243,17 +242,17 @@ namespace left_module
   begin
     apply is_bounded.mk' (λx, max (B x) (B'' x)) B',
     { intro x y s p h, induction p, exact Dub (le.trans !le_max_left h) },
-    { intro x y z s p q h, induction p, induction q,
+    { exact abstract begin intro x y z s p q h, induction p, induction q,
       refine transport (λx, is_surjective (i X x)) _ (Dlb h),
-      rewrite [-iterate_succ], apply iterate_left_inv },
+      rewrite [-iterate_succ], apply iterate_left_inv end end },
     { intro x y s p h, induction p, exact Elb (le.trans !le_max_right h) },
     { assumption },
     { assumption }
   end
 
   open is_bounded
-  definition is_bounded_reindex {R : Ring} {I J : Set} (e : J ≃ I) {X : exact_couple R I}
-    (HH : is_bounded X) : is_bounded (exact_couple_reindex e X) :=
+  definition is_bounded_reindex [constructor] {R : Ring} {I J : Set} (e : J ≃ I)
+    {X : exact_couple R I} (HH : is_bounded X) : is_bounded (exact_couple_reindex e X) :=
   begin
     apply is_bounded.mk' (B HH ∘ e) (B' HH ∘ e),
     { intros x y s p h, refine Dub HH _ h,
@@ -299,7 +298,7 @@ namespace left_module
     exact Dub !deg_iterate_ik_commute (le.trans !le_max_left h)
   end
 
-  -- we start counting pages at 0
+  /- We start counting pages at 0, which corresponds to what is usually called the second page -/
   definition page (r : ℕ) : exact_couple R I :=
   iterate derived_couple r X
 
@@ -485,14 +484,35 @@ namespace left_module
 
   definition Z2 [constructor] : Set := gℤ ×g gℤ
 
+  /- TODO: redefine/generalize converges_to so that it supports the usual indexing on ℤ × ℤ -/
   structure converges_to.{u v w} {R : Ring} (E' : gℤ → gℤ → LeftModule.{u v} R)
                                  (Dinf : gℤ → LeftModule.{u w} R) : Type.{max u (v+1) (w+1)} :=
     (X : exact_couple.{u 0 v w} R Z2)
     (HH : is_bounded X)
     (s₀ : gℤ → gℤ)
     (HB : Π(n : gℤ), is_bounded.B' HH (deg (k X) (n, s₀ n)) = 0)
-    (e : Π(x : gℤ ×g gℤ), exact_couple.E X x ≃lm E' x.1 x.2)
+    (e : Π(x : Z2), exact_couple.E X x ≃lm E' x.1 x.2)
     (f : Π(n : gℤ), exact_couple.D X (deg (k X) (n, s₀ n)) ≃lm Dinf n)
+
+  structure is_built_from.{u v w} {R : Ring} (D : LeftModule.{u v} R)
+    (E : ℕ → LeftModule.{u w} R) : Type.{max u (v+1) w} :=
+    (D' : ℕ → LeftModule.{u v} R)
+    (s : Πn, short_exact_mod (E n) (D' n) (D' (n+1)))
+    (e0 : D' 0 ≃lm D)
+    (n₀ : ℕ)
+    (HD' : is_contr (D' n₀))
+
+  structure converging_spectral_sequence.{u v w} {R : Ring} (E' : gℤ → gℤ → LeftModule.{u v} R)
+                                 (Dinf : gℤ → LeftModule.{u w} R) : Type.{max u (v+1) (w+1)} :=
+    (E : ℕ → graded_module.{u 0 v} R Z2)
+    (d : Π(n : ℕ), E n →gm E n)
+    (α : Π(n : ℕ) (x : Z2), E (n+1) x ≃lm graded_homology (d n) (d n) x)
+    (e : Π(n : ℕ) (x : Z2), E 0 x ≃lm E' x.1 x.2)
+    (s₀ : Z2 → ℕ)
+    (f : Π{n : ℕ} {x : Z2} (h : s₀ x ≤ n), E (s₀ x) x ≃lm E n x)
+    (HDinf : Π(n : gℤ), is_built_from (Dinf n) (λ(k : ℕ), (λx, E (s₀ x) x) (k, n - k)))
+
+
 
   infix ` ⟹ `:25 := converges_to
 
@@ -517,13 +537,24 @@ namespace left_module
     begin intro x, induction x with n s, exact e c (n, s) ⬝lm e' n s end
     (λn, f c n ⬝lm f' n)
 
-  definition converges_to_reindex {E'' : gℤ → gℤ → LeftModule R} {Dinf' : graded_module R gℤ}
+/-  definition converges_to_reindex {E'' : gℤ → gℤ → LeftModule R} {Dinf' : graded_module R gℤ}
     (i : gℤ ×g gℤ ≃ gℤ × gℤ) (e' : Πp q, E' p q ≃lm E'' (i (p, q)).1 (i (p, q)).2)
     (i2 : gℤ ≃ gℤ) (f' : Πn, Dinf n ≃lm Dinf' (i2 n)) :
     (λp q, E'' p q) ⟹ λn, Dinf' n :=
-  converges_to.mk (exact_couple_reindex i X) (is_bounded_reindex i HH) s₀ sorry /-(HB c)-/
+  converges_to.mk (exact_couple_reindex i X) (is_bounded_reindex i HH) s₀
+    sorry --(λn, ap (B' HH) (to_right_inv i _ ⬝ begin end) ⬝ HB c n)
     sorry --begin intro x, induction x with p q, exact e c (p, q) ⬝lm e' p q end
-    sorry
+    sorry-/
+
+/-  definition converges_to_reindex_neg {E'' : gℤ → gℤ → LeftModule R} {Dinf' : graded_module R gℤ}
+    (e' : Πp q, E' p q ≃lm E'' (-p) (-q))
+    (f' : Πn, Dinf n ≃lm Dinf' (-n)) :
+    (λp q, E'' p q) ⟹ λn, Dinf' n :=
+  converges_to.mk (exact_couple_reindex (equiv_neg ×≃ equiv_neg) X) (is_bounded_reindex _ HH)
+    (λn, -s₀ (-n))
+    (λn, ap (B' HH) (begin esimp, end) ⬝ HB c n)
+    sorry --begin intro x, induction x with p q, exact e c (p, q) ⬝lm e' p q end
+    sorry-/
 
   theorem is_contr_converges_to_precise (n : gℤ)
   (H : Π(n : gℤ) (l : ℕ), is_contr (E' ((deg i)^[l] (n, s₀ n)).1 ((deg i)^[l] (n, s₀ n)).2)) :

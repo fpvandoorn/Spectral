@@ -651,5 +651,9 @@ definition gmod_ker_in_im (h : is_exact_gmod f f') ⦃i : I⦄ (m : M₂ i) (p :
   image (f ← i) m :=
 is_exact.ker_in_im (h (right_inv (deg f) i) idp) m p
 
+definition is_exact_gmod_reindex [constructor] {J : Set} (e : J ≃ I) (h : is_exact_gmod f f') :
+  is_exact_gmod (graded_hom_reindex e f) (graded_hom_reindex e f') :=
+λi j k p q, h (eq_of_inv_eq p) (eq_of_inv_eq q)
+
 
 end left_module
