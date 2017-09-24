@@ -11,6 +11,14 @@ attribute ap010 [unfold 7]
   -- TODO: homotopy_of_eq and apd10 should be the same
   -- TODO: there is also apd10_eq_of_homotopy in both pi and eq(?)
 
+namespace algebra
+
+variables {A : Type} [add_ab_inf_group A]
+definition add_sub_cancel_middle (a b : A) : a + (b - a) = b :=
+!add.comm ⬝ !sub_add_cancel
+
+end algebra
+
 namespace eq
 
   definition apd10_prepostcompose_nondep {A B C D : Type} (h : C → D) {g g' : B → C} (p : g = g')
