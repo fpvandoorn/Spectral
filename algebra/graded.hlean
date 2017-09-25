@@ -11,7 +11,7 @@ namespace left_module
 definition graded [reducible] (str : Type) (I : Type) : Type := I → str
 definition graded_module [reducible] (R : Ring) : Type → Type := graded (LeftModule R)
 
-variables {R : Ring} {I : AddAbGroup} {M M₁ M₂ M₃ : graded_module R I}
+variables {R : Ring} {I : AddGroup} {M M₁ M₂ M₃ : graded_module R I}
 
 /-
   morphisms between graded modules.
@@ -214,14 +214,16 @@ graded_hom.mk0 (λi, lmid)
 variable {M}
 abbreviation gmid [constructor] := graded_hom_id M
 
-definition graded_hom_reindex [constructor] {J : AddAbGroup} (e : J ≃g I) (f : M₁ →gm M₂) :
+definition graded_hom_reindex [constructor] {J : AddGroup} (e : J ≃g I) (f : M₁ →gm M₂) :
   (λy, M₁ (e y)) →gm (λy, M₂ (e y)) :=
-graded_hom.mk'' (equiv_of_isomorphism e ⬝e deg f ⬝e equiv_of_isomorphism e⁻¹ᵍ) (λy₁ y₂ p, f ↘ (eq_of_inv_eq p))
-                (deg_elt f)
-                sorry
+graded_hom.mk'' (group.equiv_of_isomorphism e ⬝e deg f ⬝e group.equiv_of_isomorphism e⁻¹ᵍ)
+                (λy₁ y₂ p, f ↘ (to_eq_of_inv_eq (group.equiv_of_isomorphism e) p))
+                (e⁻¹ᵍ (deg_elt f))
+                (λi, ap e⁻¹ᵍ (deg_eq f (e i)) ⬝ group.to_respect_add e⁻¹ᵍ _ _ ⬝
+                     ap (λx, x + _) (to_left_inv (group.equiv_of_isomorphism e) i))
 
 definition gm_constant [constructor] (M₁ M₂ : graded_module R I) (d : I) : M₁ →gm M₂ :=
-graded_hom.mk' d (gmd_constant d M₁ M₂)
+graded_hom.mk' d (gmd_constant (right_action d) M₁ M₂)
 
 definition is_surjective_graded_hom_compose ⦃x z⦄
   (f' : M₂ →gm M₃) (f : M₁ →gm M₂) (p : deg f' (deg f x) = z)
@@ -254,13 +256,20 @@ definition isomorphism_of_graded_iso [constructor] (φ : M₁ ≃gm M₂) (i : I
 isomorphism.mk (φ i) _
 
 definition isomorphism_of_graded_iso_out [constructor] (φ : M₁ ≃gm M₂) (i : I) :
-  M₁ ((deg φ)⁻¹ i) ≃lm M₂ i :=
+  M₁ ((deg φ)⁻¹ᵉ i) ≃lm M₂ i :=
 isomorphism_of_graded_iso' φ !to_right_inv
 
 protected definition graded_iso.mk [constructor] (d : I) (φ : Πi, M₁ i ≃lm M₂ (i + d)) :
   M₁ ≃gm M₂ :=
 begin
   apply graded_iso.mk' (graded_hom.mk d φ),
+  intro i j p, induction p,
+  exact to_is_equiv (equiv_of_isomorphism (φ i)),
+end
+
+protected definition graded_iso.mk0 [constructor] (φ : Πi, M₁ i ≃lm M₂ i) : M₁ ≃gm M₂ :=
+begin
+  apply graded_iso.mk' (graded_hom.mk0 φ),
   intro i j p, induction p,
   exact to_is_equiv (equiv_of_isomorphism (φ i)),
 end
@@ -275,8 +284,8 @@ end
 
 definition graded_iso_of_eq [constructor] {M₁ M₂ : graded_module R I} (p : M₁ ~ M₂)
   : M₁ ≃gm M₂ :=
-graded_iso.mk erfl (λi, isomorphism_of_eq (p i))
-exit
+graded_iso.mk0 (λi, isomorphism_of_eq (p i))
+
 -- definition to_gminv [constructor] (φ : M₁ ≃gm M₂) : M₂ →gm M₁ :=
 -- graded_hom.mk_out (deg φ)⁻¹ᵉ
 --   abstract begin
@@ -286,18 +295,19 @@ exit
 
 variable (M)
 definition graded_iso.refl [refl] [constructor] : M ≃gm M :=
-graded_iso.mk equiv.rfl (λi, isomorphism.rfl)
+graded_iso.mk0 (λi, isomorphism.rfl)
 variable {M}
 
 definition graded_iso.rfl [refl] [constructor] : M ≃gm M := graded_iso.refl M
 
 definition graded_iso.symm [symm] [constructor] (φ : M₁ ≃gm M₂) : M₂ ≃gm M₁ :=
-graded_iso.mk_out (deg φ)⁻¹ᵉ (λi, (isomorphism_of_graded_iso φ i)⁻¹ˡᵐ)
+graded_iso.mk_out (-deg_elt φ)
+                  (λi, (isomorphism_of_graded_iso' φ (deg_eq φ i ⬝ ap (λx, i + x) !neg_neg⁻¹ᵖ))⁻¹ˡᵐ)
 
 definition graded_iso.trans [trans] [constructor] (φ : M₁ ≃gm M₂) (ψ : M₂ ≃gm M₃) : M₁ ≃gm M₃ :=
-graded_iso.mk (deg φ ⬝e deg ψ)
-  (λi, isomorphism_of_graded_iso φ i ⬝lm isomorphism_of_graded_iso ψ (deg φ i))
-
+graded_iso.mk (deg_elt φ + deg_elt ψ)
+  (λi, isomorphism_of_graded_iso φ i ⬝lm isomorphism_of_graded_iso' ψ sorry)
+exit
 definition graded_iso.eq_trans [trans] [constructor]
    {M₁ M₂ M₃ : graded_module R I} (φ : M₁ ~ M₂) (ψ : M₂ ≃gm M₃) : M₁ ≃gm M₃ :=
 proof graded_iso.trans (graded_iso_of_eq φ) ψ qed
